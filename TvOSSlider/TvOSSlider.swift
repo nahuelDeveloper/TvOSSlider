@@ -9,8 +9,8 @@
 import UIKit
 import GameController
 
-private let trackViewHeight: CGFloat = 5
-private let thumbSize: CGFloat = 30
+private let trackViewHeight: CGFloat = 10
+private let thumbSize: CGFloat = 10
 private let animationDuration: TimeInterval = 0.3
 private let defaultValue: Float = 0
 private let defaultMinimumValue: Float = 0
@@ -18,12 +18,13 @@ private let defaultMaximumValue: Float = 1
 private let defaultIsContinuous: Bool = true
 private let defaultThumbTintColor: UIColor = .white
 private let defaultTrackColor: UIColor = .gray
-private let defaultMininumTrackTintColor: UIColor = .blue
+private let defaultMininumTrackTintColor: UIColor = .gray
 private let defaultFocusScaleFactor: CGFloat = 1.05
 private let defaultStepValue: Float = 0.1
 private let decelerationRate: Float = 0.92
 private let decelerationMaxVelocity: Float = 1000
 private let fineTunningVelocityThreshold: Float = 600
+private let defaultLabelsOffset: CGFloat = 15.0
 
 /// A control used to select a single value from a continuous range of values.
 public final class TvOSSlider: UIControl {
@@ -264,6 +265,8 @@ public final class TvOSSlider: UIControl {
     
     private var thumbViewImages: [ControlState: UIImage] = [:]
     private var thumbView: UIImageView!
+    public var currentTimeLabel: CurrentTimeLabel!
+    public var endTimeLabel: UILabel!
     
     private var trackViewImages: [ControlState: UIImage] = [:]
     private var trackView: UIImageView!
@@ -279,6 +282,7 @@ public final class TvOSSlider: UIControl {
     private var rightTapGestureRecognizer: UITapGestureRecognizer!
     
     private var thumbViewCenterXConstraint: NSLayoutConstraint!
+    private var currentTimeLabelCenterXConstraint: NSLayoutConstraint!
     
     private var dPadState: DPadState = .select
     
@@ -292,11 +296,15 @@ public final class TvOSSlider: UIControl {
         setUpMinimumTrackView()
         setUpMaximumTrackView()
         setUpThumbView()
+        setUpCurrentTimeLabel()
+        setUpEndTimeLabel()
         
         setUpTrackViewConstraints()
         setUpMinimumTrackViewConstraints()
         setUpMaximumTrackViewConstraints()
         setUpThumbViewConstraints()
+        setUpCurrentTimeLabelConstraints()
+        setUpEndTimeLabelConstraints()
         
         setUpGestures()
         
@@ -306,9 +314,23 @@ public final class TvOSSlider: UIControl {
     
     private func setUpThumbView() {
         thumbView = UIImageView()
-        thumbView.layer.cornerRadius = thumbSize/2
         thumbView.backgroundColor = thumbTintColor
         addSubview(thumbView)
+    }
+    
+    private func setUpCurrentTimeLabel() {
+        currentTimeLabel = CurrentTimeLabel(frame: .zero)
+        currentTimeLabel.text = "01:15"
+        currentTimeLabel.textColor = .black
+        currentTimeLabel.backgroundColor = .white
+        addSubview(currentTimeLabel)
+    }
+    
+    private func setUpEndTimeLabel() {
+        endTimeLabel = UILabel()
+        endTimeLabel.text = "-10:00"
+        endTimeLabel.textColor = .white
+        addSubview(endTimeLabel)
     }
     
     private func setUpTrackView() {
@@ -359,10 +381,22 @@ public final class TvOSSlider: UIControl {
     private func setUpThumbViewConstraints() {
         thumbView.translatesAutoresizingMaskIntoConstraints = false
         thumbView.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
-        thumbView.widthAnchor.constraint(equalToConstant: thumbSize).isActive = true
+        thumbView.widthAnchor.constraint(equalToConstant: 2.0).isActive = true
         thumbView.heightAnchor.constraint(equalToConstant: thumbSize).isActive = true
         thumbViewCenterXConstraint = thumbView.centerXAnchor.constraint(equalTo: trackView.leadingAnchor, constant: CGFloat(value))
         thumbViewCenterXConstraint.isActive = true
+    }
+    
+    private func setUpCurrentTimeLabelConstraints() {
+        currentTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+        currentTimeLabel.centerXAnchor.constraint(equalTo: thumbView.centerXAnchor).isActive = true
+        currentTimeLabel.topAnchor.constraint(equalTo: trackView.bottomAnchor, constant: defaultLabelsOffset).isActive = true
+    }
+    
+    private func setUpEndTimeLabelConstraints() {
+        endTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+        endTimeLabel.trailingAnchor.constraint(equalTo: trackView.trailingAnchor).isActive = true
+        endTimeLabel.topAnchor.constraint(equalTo: trackView.bottomAnchor, constant: defaultLabelsOffset).isActive = true
     }
     
     private func setUpGestures() {
@@ -512,5 +546,32 @@ public final class TvOSSlider: UIControl {
         }
         panGestureRecognizer.isEnabled = true
         super.pressesBegan(presses, with: event)
+    }
+}
+
+public class CurrentTimeLabel: UILabel {
+    
+    let edgesOffset: CGFloat = 8.0
+    
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        layer.cornerRadius = 10.0
+        layer.masksToBounds = true
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+        
+    public override func drawText(in rect: CGRect) {
+        let insets = UIEdgeInsets(top: edgesOffset, left: edgesOffset, bottom: edgesOffset, right: edgesOffset)
+        super.drawText(in: rect.inset(by: insets))
+    }
+    
+    public override var intrinsicContentSize: CGSize {
+        let size = super.intrinsicContentSize
+        return CGSize(width: size.width + 20,
+                      height: size.height + 10)
     }
 }
